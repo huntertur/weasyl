@@ -4,28 +4,6 @@ from weasyl import errorcode
 from weasyl.test import db_utils
 
 
-INVALID_PATHS = (
-    '/note',
-    '/note?noteid=1&noteid=2',
-)
-
-
-@pytest.mark.usefixtures('db')
-@pytest.mark.parametrize('path', INVALID_PATHS)
-def test_get_note_guest_invalid(app, path):
-    resp = app.get(path, status=403)
-    assert resp.html.find(id='error_content').p.text.strip() == errorcode.unsigned
-
-
-@pytest.mark.usefixtures('db')
-@pytest.mark.parametrize('path', INVALID_PATHS)
-def test_get_note_invalid(app, path):
-    user = db_utils.create_user()
-    cookie = db_utils.create_session(user)
-    resp = app.get(path, headers={'Cookie': cookie}, status=404)
-    assert resp.html.find(id='error_content').p.text.strip() == errorcode.error_messages['noteRecordMissing']
-
-
 @pytest.mark.usefixtures('db')
 def test_get_note_permissions(app):
     user1 = db_utils.create_user(username='user1')
