@@ -18,27 +18,31 @@ def test_get_note_permissions(app):
         'title': 'Title 1',
         'content': 'Content 1',
     }, headers={'Cookie': cookie1})
+    resp = app.get('/notes?folder=outbox', headers={'Cookie': cookie1})
+    note1_path = resp.html.find('a', string='Title 1')['href']
 
     app.post('/notes/compose', {
         'recipient': 'user3',
         'title': 'Title 2',
         'content': 'Content 2',
     }, headers={'Cookie': cookie2})
+    resp = app.get('/notes?folder=outbox', headers={'Cookie': cookie2})
+    note2_path = resp.html.find('a', string='Title 2')['href']
 
-    resp = app.get('/note?noteid=1', headers={'Cookie': cookie1})
+    resp = app.get(note1_path, headers={'Cookie': cookie1})
     assert resp.html.find(id='note-content').div.div.p.string == 'Content 1'
 
-    resp = app.get('/note?noteid=1', headers={'Cookie': cookie2})
+    resp = app.get(note1_path, headers={'Cookie': cookie2})
     assert resp.html.find(id='note-content').div.div.p.string == 'Content 1'
 
-    resp = app.get('/note?noteid=1', headers={'Cookie': cookie3}, status=403)
+    resp = app.get(note1_path, headers={'Cookie': cookie3}, status=403)
     assert resp.html.find(id='error_content').p.text.strip() == errorcode.error_messages['InsufficientPermissions']
 
-    resp = app.get('/note?noteid=2', headers={'Cookie': cookie1}, status=403)
+    resp = app.get(note2_path, headers={'Cookie': cookie1}, status=403)
     assert resp.html.find(id='error_content').p.text.strip() == errorcode.error_messages['InsufficientPermissions']
 
-    resp = app.get('/note?noteid=2', headers={'Cookie': cookie2})
+    resp = app.get(note2_path, headers={'Cookie': cookie2})
     assert resp.html.find(id='note-content').div.div.p.string == 'Content 2'
 
-    resp = app.get('/note?noteid=2', headers={'Cookie': cookie3})
+    resp = app.get(note2_path, headers={'Cookie': cookie3})
     assert resp.html.find(id='note-content').div.div.p.string == 'Content 2'
